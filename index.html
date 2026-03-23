@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#ffffff">
+<title>John's Habit Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#f5f7fa;--bg2:#fff;--bg3:#eef1f5;
+    --text:#1a2030;--text2:#4a5568;--text3:#8a96a8;
+    --border:#dde3ec;--radius:12px;--shadow:0 1px 3px rgba(0,0,0,0.08);
+    --green:#0f8a5f;--green-dim:#e0f5ee;--green-text:#0a6b49;
+    --red:#c62828;--red-dim:#ffebee;--red-text:#b71c1c;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  /* HEADER */
+  .header{background:var(--text);padding:14px 16px 10px;}
+  .header-row{display:flex;justify-content:space-between;align-items:center;}
+  .header-title{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;color:#fff;}
+  .score-pill{background:rgba(255,255,255,0.15);border-radius:20px;padding:5px 12px;text-align:center;}
+  .score-n{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:#fff;}
+  .score-l{font-size:9px;color:rgba(255,255,255,0.6);letter-spacing:.05em;}
+
+  /* MONTH SELECTOR */
+  .month-bar{background:rgba(255,255,255,0.08);padding:8px 16px 10px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;}
+  .month-bar::-webkit-scrollbar{display:none;}
+  .month-pill{flex-shrink:0;padding:5px 14px;border-radius:20px;border:1.5px solid rgba(255,255,255,0.2);font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;color:rgba(255,255,255,0.6);cursor:pointer;transition:all .2s;letter-spacing:.04em;}
+  .month-pill.active{background:#fff;color:var(--text);border-color:#fff;}
+
+  /* DAY SELECTOR */
+  .day-section{background:#fff;border-bottom:1px solid var(--border);padding:10px 0 8px;}
+  .day-scroll{display:flex;gap:6px;overflow-x:auto;padding:0 16px;scrollbar-width:none;}
+  .day-scroll::-webkit-scrollbar{display:none;}
+  .day-btn{flex-shrink:0;width:44px;padding:7px 4px;border-radius:10px;border:1.5px solid var(--border);text-align:center;cursor:pointer;transition:all .15s;background:#fff;}
+  .day-btn.active{background:var(--text);border-color:var(--text);}
+  .day-btn.has-data{border-color:var(--green);}
+  .day-btn.today-btn{border-color:var(--green);border-width:2px;}
+  .day-name{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:600;letter-spacing:.05em;color:var(--text3);text-transform:uppercase;}
+  .day-btn.active .day-name{color:rgba(255,255,255,0.65);}
+  .day-btn.has-data:not(.active) .day-name{color:var(--green-text);}
+  .day-num{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;color:var(--text);}
+  .day-btn.active .day-num{color:#fff;}
+  .day-btn.has-data:not(.active) .day-num{color:var(--green-text);}
+  .day-dot{width:4px;height:4px;border-radius:50%;margin:3px auto 0;background:transparent;}
+  .day-btn.active .day-dot{background:rgba(255,255,255,0.4);}
+  .day-btn.has-data:not(.active) .day-dot{background:var(--green);}
+
+  /* PAGES */
+  .page{display:none;padding-bottom:72px;}
+  .page.active{display:block;}
+
+  /* DATE HEADER */
+  .date-header{padding:10px 16px 6px;display:flex;justify-content:space-between;align-items:center;}
+  .date-label{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;color:var(--text);}
+  .date-score{font-size:11px;color:var(--text3);}
+  .date-score b{color:var(--green);}
+
+  /* CATEGORY HEADER */
+  .cat-hdr{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:10px 16px 4px;}
+
+  /* HABITS */
+  .habits-list{padding:0 16px;display:flex;flex-direction:column;gap:6px;}
+  .habit-card{background:#fff;border-radius:var(--radius);border:1.5px solid var(--border);padding:11px 12px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow);transition:all .15s;}
+  .habit-card.done{background:var(--green-dim);border-color:var(--green);}
+  .habit-card.missed{background:var(--red-dim);border-color:#ef9a9a;}
+  .habit-info{flex:1;min-width:0;}
+  .habit-name{font-size:13px;font-weight:600;color:var(--text);line-height:1.3;}
+  .habit-card.done .habit-name{color:var(--green-text);}
+  .habit-card.missed .habit-name{color:var(--red-text);text-decoration:line-through;}
+  .habit-freq{font-size:10px;color:var(--text3);margin-top:2px;}
+  .habit-card.done .habit-freq{color:var(--green-text);opacity:.7;}
+  .toggle-wrap{display:flex;gap:5px;flex-shrink:0;}
+  .tog{width:32px;height:32px;border-radius:50%;border:2px solid var(--border);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;font-size:13px;font-weight:700;}
+  .tog-yes{border-color:#a5d6a7;color:#4caf50;}
+  .tog-yes.on{background:var(--green);border-color:var(--green);color:#fff;}
+  .tog-no{border-color:#ef9a9a;color:#ef5350;}
+  .tog-no.on{background:var(--red);border-color:var(--red);color:#fff;}
+
+  /* MONTH PAGE */
+  .section-title{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);padding:12px 16px 6px;}
+  .progress-card{margin:0 16px 8px;background:#fff;border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow);}
+  .progress-hdr{background:var(--text);padding:9px 14px;}
+  .progress-hdr-txt{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;color:#fff;letter-spacing:.04em;}
+  .progress-row{display:flex;align-items:center;gap:8px;padding:8px 14px;border-top:1px solid var(--border);}
+  .progress-row:nth-child(even){background:var(--bg3);}
+  .p-name{font-size:11px;color:var(--text2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .p-bar-wrap{flex:2;background:var(--border);border-radius:20px;height:5px;overflow:hidden;}
+  .p-bar{height:5px;border-radius:20px;transition:width .4s;}
+  .p-pct{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;min-width:32px;text-align:right;}
+
+  /* STREAKS PAGE */
+  .streak-list{padding:0 16px;display:flex;flex-direction:column;gap:6px;}
+  .streak-card{background:#fff;border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow);}
+  .streak-top{display:flex;align-items:center;gap:10px;padding:10px 12px;}
+  .streak-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+  .streak-name{font-size:12px;font-weight:600;color:var(--text);flex:1;line-height:1.3;}
+  .streak-stat{text-align:right;flex-shrink:0;}
+  .streak-pct{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;}
+  .streak-sub{font-size:9px;color:var(--text3);margin-top:1px;}
+  .streak-bar-wrap{height:4px;background:var(--border);}
+  .streak-bar{height:4px;transition:width .4s;}
+
+  /* BOTTOM NAV */
+  .nav{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--border);display:flex;box-shadow:0 -2px 8px rgba(0,0,0,0.05);}
+  .nav-tab{flex:1;padding:11px 4px 9px;text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--text3);cursor:pointer;border-top:2px solid transparent;transition:all .2s;}
+  .nav-tab.active{color:var(--text);border-top-color:var(--text);}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-row">
+    <div class="header-title">Habit Tracker</div>
+    <div class="score-pill">
+      <div class="score-n" id="month-score">—</div>
+      <div class="score-l">MONTH %</div>
+    </div>
+  </div>
+  <div class="month-bar" id="month-bar"></div>
+</div>
+
+<div class="day-section">
+  <div class="day-scroll" id="day-scroll"></div>
+</div>
+
+<div class="page active" id="page-today">
+  <div class="date-header">
+    <div class="date-label" id="date-label"></div>
+    <div class="date-score" id="day-score"></div>
+  </div>
+  <div class="habits-list" id="habits-list"></div>
+</div>
+
+<div class="page" id="page-month">
+  <div class="section-title" id="month-page-title"></div>
+  <div class="progress-card">
+    <div class="progress-hdr"><div class="progress-hdr-txt">HABIT COMPLETION THIS MONTH</div></div>
+    <div id="progress-rows"></div>
+  </div>
+</div>
+
+<div class="page" id="page-streaks">
+  <div class="section-title" id="streaks-page-title"></div>
+  <div class="streak-list" id="streak-list"></div>
+</div>
+
+<div class="nav">
+  <div class="nav-tab active" onclick="showTab('today',this)">Today</div>
+  <div class="nav-tab" onclick="showTab('month',this)">Month</div>
+  <div class="nav-tab" onclick="showTab('streaks',this)">Streaks</div>
+</div>
+
+<script>
+var MONTHS=[
+  {y:2026,m:3,label:"Mar 26"},
+  {y:2026,m:4,label:"Apr 26"},
+  {y:2026,m:5,label:"May 26"},
+  {y:2026,m:6,label:"Jun 26"},
+  {y:2026,m:7,label:"Jul 26"},
+  {y:2026,m:8,label:"Aug 26"},
+  {y:2026,m:9,label:"Sep 26"},
+  {y:2026,m:10,label:"Oct 26"},
+  {y:2026,m:11,label:"Nov 26"},
+  {y:2026,m:12,label:"Dec 26"},
+];
+
+var habits=[
+  {cat:"sleep", name:"Sleep 7-8 hrs",                         freq:"Daily"},
+  {cat:"nut",   name:"Eating window 10:30am-7pm",              freq:"Daily"},
+  {cat:"nut",   name:"Breakfast (muesli/fruits/yoghurt/nuts)", freq:"Daily"},
+  {cat:"nut",   name:"Protein shake",                          freq:"Daily"},
+  {cat:"nut",   name:"Protein rich dinner",                    freq:"Daily"},
+  {cat:"nut",   name:"Restrict snacks to fruit/veg/nuts",      freq:"Daily"},
+  {cat:"nut",   name:"Drink > 2 litres of water",              freq:"Daily"},
+  {cat:"fit",   name:"Gym \u2014 strength workout",            freq:"3x/week"},
+  {cat:"fit",   name:"Cardio workout / walk",                  freq:"5x/week"},
+  {cat:"fit",   name:"Home mobility program (30 min)",         freq:"Daily"},
+  {cat:"fit",   name:"Walk the dog",                           freq:"4x/week"},
+  {cat:"mind",  name:"Clean teeth 2x per day",                 freq:"Daily"},
+  {cat:"mind",  name:"Take supplements",                       freq:"Daily"},
+  {cat:"mind",  name:"Meditation & positive mindset",          freq:"Daily"},
+  {cat:"mind",  name:"Read a book (30 min)",                   freq:"Daily"},
+  {cat:"mind",  name:"Work on new skill / AI",                 freq:"5x/week"},
+  {cat:"admin", name:"Track expenses (1 hr)",                  freq:"Fortnightly"},
+  {cat:"admin", name:"Maintain house and car",                 freq:"As needed"},
+];
+
+var catMeta={
+  sleep:{label:"Sleep & Recovery",color:"#1A6B96",bg:"#E8F4FD",icon:"\uD83C\uDF19"},
+  nut:  {label:"Nutrition",        color:"#2E7D32",bg:"#E8F5E9",icon:"\uD83E\uDD57"},
+  fit:  {label:"Fitness",          color:"#E65100",bg:"#FFF3E0",icon:"\uD83C\uDFCB"},
+  mind: {label:"Mind & Wellbeing", color:"#6A1B9A",bg:"#F3E5F5",icon:"\uD83E\uDDE0"},
+  admin:{label:"Life Admin",       color:"#AD1457",bg:"#FCE4EC",icon:"\uD83D\uDCC1"},
+};
+
+var DAY_NAMES=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+var MONTH_NAMES=["","January","February","March","April","May","June","July","August","September","October","November","December"];
+
+// State
+var now=new Date();
+var currentMonthIdx=0; // index into MONTHS array
+var selectedDay=1;
+var activeTab="today";
+
+// Find current month in list
+for(var i=0;i<MONTHS.length;i++){
+  if(MONTHS[i].y===now.getFullYear()&&MONTHS[i].m===now.getMonth()+1){
+    currentMonthIdx=i; break;
+  }
+}
+
+function storeKey(y,m){return "habits_"+y+"_"+m;}
+function getData(y,m){return JSON.parse(localStorage.getItem(storeKey(y,m))||"{}");}
+function saveData(y,m,d){localStorage.setItem(storeKey(y,m),JSON.stringify(d));}
+
+function daysInMonth(y,m){return new Date(y,m,0).getDate();}
+function dowOfDay(y,m,d){return new Date(y,m-1,d).getDay();}
+
+function getCurMonth(){return MONTHS[currentMonthIdx];}
+
+// ── MONTH BAR ────────────────────────────────────────────────────────────────
+function renderMonthBar(){
+  var el=document.getElementById("month-bar");
+  var html="";
+  for(var i=0;i<MONTHS.length;i++){
+    var cls="month-pill"+(i===currentMonthIdx?" active":"");
+    html+='<div class="'+cls+'" onclick="switchMonth('+i+')">'+MONTHS[i].label+'</div>';
+  }
+  el.innerHTML=html;
+  // Scroll active pill into view
+  setTimeout(function(){
+    var pills=el.querySelectorAll(".month-pill");
+    if(pills[currentMonthIdx])pills[currentMonthIdx].scrollIntoView({block:"nearest",inline:"center"});
+  },50);
+}
+
+function switchMonth(idx){
+  currentMonthIdx=idx;
+  var mo=getCurMonth();
+  var days=daysInMonth(mo.y,mo.m);
+  // Default to today if same month, else day 1
+  var isNow=(mo.y===now.getFullYear()&&mo.m===now.getMonth()+1);
+  selectedDay=isNow?now.getDate():1;
+  if(selectedDay>days)selectedDay=days;
+  renderMonthBar();
+  renderDayScroll();
+  renderHabits();
+  updateMonthScore();
+  if(activeTab==="month")renderMonthPage();
+  if(activeTab==="streaks")renderStreaksPage();
+}
+
+// ── DAY SCROLL ────────────────────────────────────────────────────────────────
+function renderDayScroll(){
+  var mo=getCurMonth();
+  var days=daysInMonth(mo.y,mo.m);
+  var data=getData(mo.y,mo.m);
+  var isNow=(mo.y===now.getFullYear()&&mo.m===now.getMonth()+1);
+  var el=document.getElementById("day-scroll");
+  var html="";
+  for(var d=1;d<=days;d++){
+    var dow=dowOfDay(mo.y,mo.m,d);
+    var isToday=isNow&&d===now.getDate();
+    var isSel=d===selectedDay;
+    var dayData=data[d]||{};
+    var hasAny=false;
+    for(var k in dayData){if(dayData[k]===1||dayData[k]===0){hasAny=true;break;}}
+    var cls="day-btn"+(isSel?" active":"")+(hasAny&&!isSel?" has-data":"")+(isToday&&!isSel?" today-btn":"");
+    html+='<div class="'+cls+'" onclick="selectDay('+d+')">';
+    html+='<div class="day-name">'+DAY_NAMES[dow].slice(0,3)+'</div>';
+    html+='<div class="day-num">'+d+'</div>';
+    html+='<div class="day-dot"></div>';
+    html+='</div>';
+  }
+  el.innerHTML=html;
+  setTimeout(function(){
+    var chips=el.querySelectorAll(".day-btn");
+    if(chips[selectedDay-1])chips[selectedDay-1].scrollIntoView({block:"nearest",inline:"center"});
+  },50);
+}
+
+function selectDay(d){
+  selectedDay=d;
+  renderDayScroll();
+  renderHabits();
+}
+
+// ── HABITS ────────────────────────────────────────────────────────────────────
+function renderHabits(){
+  var mo=getCurMonth();
+  var dow=dowOfDay(mo.y,mo.m,selectedDay);
+  document.getElementById("date-label").textContent=
+    DAY_NAMES[dow]+" "+selectedDay+" "+MONTH_NAMES[mo.m]+" "+mo.y;
+  var data=getData(mo.y,mo.m);
+  var dayData=data[selectedDay]||{};
+  var done=0;
+  for(var i=0;i<habits.length;i++){if(dayData[i]===1)done++;}
+  document.getElementById("day-score").innerHTML=
+    "Today: <b>"+done+" of "+habits.length+"</b>";
+  var el=document.getElementById("habits-list");
+  var html="";
+  var lastCat="";
+  for(var i=0;i<habits.length;i++){
+    var h=habits[i];
+    var m=catMeta[h.cat];
+    var val=dayData[i];
+    var isDone=val===1;
+    var isMissed=val===0;
+    if(h.cat!==lastCat){
+      lastCat=h.cat;
+      html+='<div class="cat-hdr" style="color:'+m.color+'">'+m.icon+' '+m.label+'</div>';
+    }
+    html+='<div class="habit-card'+(isDone?" done":"")+(isMissed?" missed":"")+'">';
+    html+='<div class="habit-info"><div class="habit-name">'+h.name+'</div>';
+    html+='<div class="habit-freq">'+h.freq+'</div></div>';
+    html+='<div class="toggle-wrap">';
+    html+='<div class="tog tog-yes'+(isDone?" on":"")+'" onclick="setHabit('+i+',1)">&#10003;</div>';
+    html+='<div class="tog tog-no'+(isMissed?" on":"")+'" onclick="setHabit('+i+',0)">&#10007;</div>';
+    html+='</div></div>';
+  }
+  el.innerHTML=html;
+}
+
+function setHabit(idx,val){
+  var mo=getCurMonth();
+  var data=getData(mo.y,mo.m);
+  if(!data[selectedDay])data[selectedDay]={};
+  // Toggle: tap same button again to clear
+  if(data[selectedDay][idx]===val){delete data[selectedDay][idx];}
+  else{data[selectedDay][idx]=val;}
+  saveData(mo.y,mo.m,data);
+  renderDayScroll();
+  renderHabits();
+  updateMonthScore();
+  if(activeTab==="month")renderMonthPage();
+  if(activeTab==="streaks")renderStreaksPage();
+}
+
+// ── MONTH SCORE ────────────────────────────────────────────────────────────────
+function updateMonthScore(){
+  var mo=getCurMonth();
+  var data=getData(mo.y,mo.m);
+  var done=0,rec=0;
+  for(var d in data){
+    for(var i=0;i<habits.length;i++){
+      if(data[d][i]===1){done++;rec++;}
+      else if(data[d][i]===0){rec++;}
+    }
+  }
+  document.getElementById("month-score").textContent=rec>0?Math.round(done/rec*100)+"%":"—";
+}
+
+// ── MONTH PAGE ────────────────────────────────────────────────────────────────
+function renderMonthPage(){
+  var mo=getCurMonth();
+  document.getElementById("month-page-title").textContent=
+    MONTH_NAMES[mo.m]+" "+mo.y+" \u2014 Progress";
+  var data=getData(mo.y,mo.m);
+  var days=daysInMonth(mo.y,mo.m);
+  var html="";
+  for(var i=0;i<habits.length;i++){
+    var h=habits[i];
+    var m=catMeta[h.cat];
+    var done=0,rec=0;
+    for(var d=1;d<=days;d++){
+      if(data[d]){
+        if(data[d][i]===1){done++;rec++;}
+        else if(data[d][i]===0){rec++;}
+      }
+    }
+    var pct=rec>0?Math.round(done/rec*100):0;
+    var clr=pct>=80?"#0f8a5f":pct>=50?"#f59e0b":"#e53e3e";
+    html+='<div class="progress-row">';
+    html+='<div class="p-name" style="color:'+m.color+'">'+h.name+'</div>';
+    html+='<div class="p-bar-wrap"><div class="p-bar" style="width:'+(rec>0?pct:0)+'%;background:'+clr+'"></div></div>';
+    html+='<div class="p-pct" style="color:'+clr+'">'+(rec>0?pct+"%":"—")+'</div>';
+    html+='</div>';
+  }
+  document.getElementById("progress-rows").innerHTML=html;
+}
+
+// ── STREAKS PAGE ────────────────────────────────────────────────────────────────
+function renderStreaksPage(){
+  var mo=getCurMonth();
+  document.getElementById("streaks-page-title").textContent=
+    MONTH_NAMES[mo.m]+" "+mo.y+" \u2014 Streaks";
+  var data=getData(mo.y,mo.m);
+  var days=daysInMonth(mo.y,mo.m);
+  var html="";
+  for(var i=0;i<habits.length;i++){
+    var h=habits[i];
+    var m=catMeta[h.cat];
+    var done=0,rec=0;
+    for(var d=1;d<=days;d++){
+      if(data[d]){
+        if(data[d][i]===1){done++;rec++;}
+        else if(data[d][i]===0){rec++;}
+      }
+    }
+    // Current streak from last recorded day backwards
+    var streak=0;
+    for(var d=days;d>=1;d--){
+      if(data[d]&&data[d][i]===1)streak++;
+      else break;
+    }
+    var pct=rec>0?Math.round(done/rec*100):0;
+    var clr=pct>=80?"#0f8a5f":pct>=50?"#f59e0b":"#e53e3e";
+    html+='<div class="streak-card">';
+    html+='<div class="streak-top">';
+    html+='<div class="streak-icon" style="background:'+m.bg+'">'+m.icon+'</div>';
+    html+='<div style="flex:1;min-width:0">';
+    html+='<div class="streak-name">'+h.name+'</div>';
+    html+='<div style="font-size:10px;color:var(--text3)">'+h.freq+(streak>0?' &nbsp;\u{1F525} '+streak+' day streak':'')+'</div>';
+    html+='</div>';
+    html+='<div class="streak-stat">';
+    html+='<div class="streak-pct" style="color:'+clr+'">'+(rec>0?pct+"%":"—")+'</div>';
+    html+='<div class="streak-sub">'+done+' of '+rec+' days</div>';
+    html+='</div></div>';
+    html+='<div class="streak-bar-wrap"><div class="streak-bar" style="width:'+(rec>0?pct:0)+'%;background:'+clr+'"></div></div>';
+    html+='</div>';
+  }
+  document.getElementById("streak-list").innerHTML=html;
+}
+
+// ── PAGE NAV ──────────────────────────────────────────────────────────────────
+function showTab(p,el){
+  activeTab=p;
+  document.querySelectorAll(".page").forEach(function(e){e.classList.remove("active");});
+  document.querySelectorAll(".nav-tab").forEach(function(e){e.classList.remove("active");});
+  document.getElementById("page-"+p).classList.add("active");
+  el.classList.add("active");
+  if(p==="month")renderMonthPage();
+  if(p==="streaks")renderStreaksPage();
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+renderMonthBar();
+renderDayScroll();
+renderHabits();
+updateMonthScore();
+</script>
+</body>
+</html>
